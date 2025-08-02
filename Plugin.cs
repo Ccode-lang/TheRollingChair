@@ -1,13 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using LethalLib.Modules;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using UnityEngine;
 using static LethalLib.Modules.Enemies;
+using static LethalLib.Modules.Levels;
 
 namespace TheRollingChair
 {
@@ -25,10 +27,14 @@ namespace TheRollingChair
         public static EnemyType ChairEnemy;
 
         public static ConfigEntry<float> RollSpeed;
+        public static ConfigEntry<string> Levels;
 
         private void Awake()
         {
             RollSpeed = Config.Bind("General", "Roll Speed", 0.6f, "The movement speed of the chair.");
+            Levels = Config.Bind("General", "Moons", "All:75", "Moons that it will spawn on. Format as: \"MoonName:SpawnWeight\".");
+
+            (Dictionary<LevelTypes, int> spawnRateByLevelType, Dictionary<string, int> spawnRateByCustomLevelType) = SolveLevels(Levels.Value);
 
             Log = Logger;
             Assets.PopulateAssets();
@@ -37,7 +43,7 @@ namespace TheRollingChair
             var Node = Assets.MainAssetBundle.LoadAsset<TerminalNode>("ChairTN");
             var Keyword = Assets.MainAssetBundle.LoadAsset<TerminalKeyword>("ChairKW");
 
-            RegisterEnemy(ChairEnemy, 100, LethalLib.Modules.Levels.LevelTypes.All, Node, Keyword);
+            RegisterEnemy(ChairEnemy, spawnRateByLevelType, spawnRateByCustomLevelType, Node, Keyword);
 
             NetworkPrefabs.RegisterNetworkPrefab(ChairEnemy.enemyPrefab);
 
@@ -54,6 +60,45 @@ namespace TheRollingChair
                     }
                 }
             }
+        }
+
+        (Dictionary<LevelTypes, int> spawnRateByLevelType, Dictionary<string, int> spawnRateByCustomLevelType) SolveLevels(string config)
+        {
+            Dictionary<LevelTypes, int> spawnRateByLevelType = new Dictionary<LevelTypes, int>();
+            Dictionary<string, int> spawnRateByCustomLevelType = new Dictionary<string, int>();
+
+            string[] configSplit = config.Split(';');
+
+            foreach (string entry in configSplit)
+            {
+                string[] levelDef = entry.Trim().Split(':');
+
+                if (levelDef.Length != 2)
+                {
+                    continue;
+                }
+
+                int spawnrate = 0;
+
+                if (!int.TryParse(levelDef[1], out spawnrate))
+                {
+                    continue;
+                }
+
+                if (Enum.TryParse<LevelTypes>(levelDef[0], true, out LevelTypes levelType))
+                {
+                    spawnRateByLevelType[levelType] = spawnrate;
+                    Logger.LogInfo($"Registered spawn rate for level type {levelType} to {spawnrate}");
+                }
+                else
+                {
+                    spawnRateByCustomLevelType[levelDef[0]] = spawnrate;
+                    Logger.LogInfo($"Registered spawn rate for custom level type {levelDef[0]} to {spawnrate}");
+                }
+            }
+
+
+            return (spawnRateByLevelType, spawnRateByCustomLevelType);
         }
     }
 
