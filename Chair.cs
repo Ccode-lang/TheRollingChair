@@ -76,8 +76,11 @@ namespace TheRollingChair
         public override void OnCollideWithPlayer(Collider other)
         {
             base.OnCollideWithPlayer(other);
-            if (!selectedPlayer.HasLineOfSightToPosition(ViewPoint.position)) {
-                other.gameObject.GetComponent<PlayerControllerB>().DamagePlayer(100, false, true, CauseOfDeath.Strangulation, 0, false, default);
+
+            PlayerControllerB player = other.gameObject.GetComponent<PlayerControllerB>();
+
+            if (!selectedPlayer.HasLineOfSightToPosition(ViewPoint.position) && GameNetworkManager.Instance.localPlayerController.playerClientId == player.playerClientId) {
+                player.DamagePlayer(100, false, true, CauseOfDeath.Strangulation, 0, false, default);
                 HangPlayerServerRpc(new NetworkObjectReference(other.gameObject.GetComponent<NetworkObject>()));
             }
         }
