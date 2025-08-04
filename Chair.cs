@@ -17,6 +17,8 @@ namespace TheRollingChair
 
         public Transform ViewPoint;
 
+        public AudioSource RollingAudio;
+
         public override void DoAIInterval()
         {
             base.DoAIInterval();
@@ -46,6 +48,11 @@ namespace TheRollingChair
                 agent.speed = Plugin.RollSpeed.Value;
                 agent.angularSpeed = 120;
                 SetDestinationToPosition(RoundManager.Instance.GetNavMeshPosition(selectedPlayer.transform.position, RoundManager.Instance.navHit, 2.75f));
+
+                if (!RollingAudio.isPlaying)
+                {
+                    PlayRollingAudioClientRpc();
+                }
             }
             else
             {
@@ -53,6 +60,11 @@ namespace TheRollingChair
                 agent.speed = 0;
                 agent.angularSpeed = 0;
                 SetDestinationToPosition(transform.position);
+
+                if (RollingAudio.isPlaying)
+                {
+                    StopPlayingRollingAudioClientRpc();
+                }
             }
         }
 
@@ -88,6 +100,18 @@ namespace TheRollingChair
         [ServerRpc(RequireOwnership = false)]
         public void HangPlayerServerRpc(NetworkObjectReference player) {
             HangPlayerClientRpc(player);
+        }
+
+        [ClientRpc]
+        public void PlayRollingAudioClientRpc()
+        {
+            RollingAudio.Play();
+        }
+
+        [ClientRpc]
+        public void StopPlayingRollingAudioClientRpc()
+        {
+            RollingAudio.Stop();
         }
 
         [ClientRpc]
