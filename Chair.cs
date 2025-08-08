@@ -19,6 +19,12 @@ namespace TheRollingChair
 
         public AudioSource RollingAudio;
 
+        public override void Start()
+        {
+            base.Start();
+            RollingAudio.volume = Plugin.RollVolume.Value;
+        }
+
         public override void DoAIInterval()
         {
             base.DoAIInterval();

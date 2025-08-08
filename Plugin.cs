@@ -27,11 +27,15 @@ namespace TheRollingChair
         public static EnemyType ChairEnemy;
 
         public static ConfigEntry<float> RollSpeed;
+
+        public static ConfigEntry<float> RollVolume;
+
         public static ConfigEntry<string> Levels;
 
         private void Awake()
         {
             RollSpeed = Config.Bind("General", "Roll Speed", 0.6f, "The movement speed of the chair.");
+            RollVolume = Config.Bind("General", "Roll Volume", 0.5f, "The volume of the rolling sound effect. This setting is client side.");
             Levels = Config.Bind("General", "Moons", "All:75", "Moons that it will spawn on. Format as: \"MoonName:SpawnWeight\".");
 
             (Dictionary<LevelTypes, int> spawnRateByLevelType, Dictionary<string, int> spawnRateByCustomLevelType) = SolveLevels(Levels.Value);
